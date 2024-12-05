@@ -14,6 +14,7 @@
 #include "ql_timer.h"
 #include "ql_watchdog.h"
 #include "ql_uart.h"
+#include "ql_osi.h"
 
 #define CFG_ENABLE_QUECTEL_OSI 0
 #define CFG_ENABLE_QUECTEL_ADC 0
@@ -115,6 +116,42 @@ extern void ql_socket_server_demo_thread_creat(void);
 extern void ql_tongfang_app_thread_creat(void);
 #endif
 
+extern void  app_main(void);
+void __attribute__((weak)) app_main(void){ }
+
+ql_task_t app_main_thread_handle = NULL;
+
+static void app_main_thread(void *args){
+   ql_rtos_task_sleep_ms(3000);
+   app_main();
+   ql_rtos_task_delete(NULL);
+}
+
+void app_main_thread_creat(void)
+{
+    int ret;
+    ret = ql_rtos_task_create(&app_main_thread_handle,
+                              (unsigned short)1024*4,
+                              3,
+                              "app_main",
+                              app_main_thread,
+                              0);
+
+    if (ret != QL_OSI_SUCCESS)
+    {
+        ql_dbg_log("Error: Failed to create fs test thread: %d\r\n", ret);
+        goto init_err;
+    }
+
+    return;
+
+init_err:
+    if (app_main_thread_handle != NULL)
+    {
+        ql_rtos_task_delete(app_main_thread_handle);
+    }
+}
+
 #if (QL_CSDK_MODE == 1)
 void quec_app_main(void * argv)
 {
@@ -207,7 +244,6 @@ void quec_app_main(void * argv)
     ql_tongfang_app_thread_creat();
 #endif
 #endif
-	extern void main(void);
-	main();
+	app_main_thread_creat();
 }
 #endif

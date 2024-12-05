@@ -9,6 +9,7 @@
 
 #include "ql_api_common.h"
 #include "FreeRTOSConfig.h"
+#include "stdint.h"
 
 #define QL_TIMER_IN_SERVICE ((void *)0xffffffff)
 
